@@ -22,7 +22,9 @@ fn main() {
     let n_job = 50;
     let pool1 = ThreadPool::new(n_worker);
     let (r_s, r_r) = mpsc::channel();
-    let r_clone = r_s.clone();
+    let (r1_s, r1_r) = mpsc::channel();
+    let (tx, rx) = mpsc::channel();
+    let tx1 = tx.clone();
 
     for _ in 0..50 {
         pool1.execute(move|| {
@@ -34,7 +36,7 @@ fn main() {
         .collect();
         let mut stock_price = rng.gen_range(1.0,50.0);
         let stock = 
-        r_clone.send(stock_name).unwrap();
+        r1_s.send(stock_name).unwrap();
         r_s.send(stock_price.to_string()).unwrap()        
         })
     }
@@ -47,13 +49,14 @@ fn main() {
     let pool = ThreadPool::new(n_workers);
     
 
-    let (tx, rx) = mpsc::channel();
-    let tx1 = tx.clone();
+   
+   
 
     for _ in 0..n_jobs{
         pool.execute(move|| {
             loop {
-                let stock_variables = r_r.recv().unwrap();
+                let mut stock_price = r_r.recv().unwrap();
+                let mut stock_name = r1_r.recv().unwrap();
                 let mut sleeptime = rng.gen_range(1,25);
                 let mut random_stock_fluctuation = rng.gen_range(0.1,0.5);
                 sleeptime = sleeptime * 100;
@@ -66,7 +69,7 @@ fn main() {
     }
     loop {
         let stock = rx.recv().unwrap();
-        println!("{} : {:.2}" ,stock_name, stock_price);
+        println!("{}", stock);
     }
 
 
